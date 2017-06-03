@@ -3,6 +3,8 @@ package com.bignerdranch.android.geoquiz;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -14,6 +16,7 @@ public class QuizActivity extends AppCompatActivity {
     private static final String TAG = QuizActivity.class.toString();
 
     private static final String KEY_INDEX = "index";
+    private static final String KEY_QUESTION_ANSWERED = "question_answered";
 
     private Button mTrueButton;
     private Button mFalseButton;
@@ -30,7 +33,9 @@ public class QuizActivity extends AppCompatActivity {
             new Question(R.string.question_asia, true),
     };
 
-    private int mCurrentIndex = 0;
+    private boolean[] mQuestionAnswered;
+
+    private int mCurrentIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +44,11 @@ public class QuizActivity extends AppCompatActivity {
         setContentView(R.layout.activity_quiz);
 
         if (savedInstanceState != null) {
+            mQuestionAnswered = savedInstanceState.getBooleanArray(KEY_QUESTION_ANSWERED);
             mCurrentIndex = savedInstanceState.getInt(KEY_INDEX, 0);
+        } else {
+            mQuestionAnswered = new boolean[mQuestionBank.length];
+            mCurrentIndex = 0;
         }
 
         mQuestionTextView = (TextView) findViewById(R.id.question_text_view);
@@ -47,7 +56,10 @@ public class QuizActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 incrementIndex();
+
                 updateQuestion();
+
+                configureButtons();
             }
         });
 
@@ -57,6 +69,8 @@ public class QuizActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 checkAnswer(true);
+
+                configureButtons();
             }
         });
 
@@ -65,6 +79,8 @@ public class QuizActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 checkAnswer(false);
+
+                configureButtons();
             }
         });
 
@@ -73,7 +89,10 @@ public class QuizActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 decrementIndex();
+
                 updateQuestion();
+
+                configureButtons();
             }
         });
 
@@ -82,11 +101,23 @@ public class QuizActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 incrementIndex();
+
                 updateQuestion();
+
+                configureButtons();
             }
         });
 
         updateQuestion();
+
+        configureButtons();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        Log.d(TAG, "onCreateOptionsMenu called");
+        getMenuInflater().inflate(R.menu.activity_quiz, menu);
+        return true;
     }
 
     @Override
@@ -111,6 +142,7 @@ public class QuizActivity extends AppCompatActivity {
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
         Log.i(TAG, "onSaveInstanceState");
+        savedInstanceState.putBooleanArray(KEY_QUESTION_ANSWERED, mQuestionAnswered);
         savedInstanceState.putInt(KEY_INDEX, mCurrentIndex);
     }
 
@@ -126,6 +158,17 @@ public class QuizActivity extends AppCompatActivity {
         Log.d(TAG, "onDestroy() called");
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_reset:
+                resetQuizState();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
     private void decrementIndex() {
         mCurrentIndex = (mCurrentIndex == 0) ? mQuestionBank.length - 1 : mCurrentIndex - 1;
     }
@@ -139,7 +182,19 @@ public class QuizActivity extends AppCompatActivity {
         mQuestionTextView.setText(question);
     }
 
+    private void configureButtons() {
+        if (mQuestionAnswered[mCurrentIndex]) {
+            mTrueButton.setEnabled(false);
+            mFalseButton.setEnabled(false);
+        } else {
+            mTrueButton.setEnabled(true);
+            mFalseButton.setEnabled(true);
+        }
+    }
+
     private void checkAnswer(boolean userPressedTrue) {
+        mQuestionAnswered[mCurrentIndex] = true;
+
         boolean answerIsTrue = mQuestionBank[mCurrentIndex].isAnswerTrue();
 
         int messageResId = 0;
@@ -152,5 +207,19 @@ public class QuizActivity extends AppCompatActivity {
 
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT)
                 .show();
+    }
+
+    private void resetQuizState() {
+        mCurrentIndex = 0;
+
+        for (int i = 0; i < mQuestionAnswered.length; i++) {
+            mQuestionAnswered[i] = false;
+        }
+
+        configureButtons();
+
+        updateQuestion();
+
+        Toast.makeText(this, R.string.exam_reset, Toast.LENGTH_SHORT).show();
     }
 }
