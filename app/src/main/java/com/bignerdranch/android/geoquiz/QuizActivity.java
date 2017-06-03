@@ -17,6 +17,7 @@ public class QuizActivity extends AppCompatActivity {
 
     private static final String KEY_INDEX = "index";
     private static final String KEY_QUESTION_ANSWERED = "question_answered";
+    private static final String KEY_QUESTION_ANSWERED_CORRECTLY = "question_answered_correctly";
 
     private Button mTrueButton;
     private Button mFalseButton;
@@ -35,6 +36,8 @@ public class QuizActivity extends AppCompatActivity {
 
     private boolean[] mQuestionAnswered;
 
+    private boolean[] mQuestionAnsweredCorrectly;
+
     private int mCurrentIndex;
 
     @Override
@@ -45,9 +48,11 @@ public class QuizActivity extends AppCompatActivity {
 
         if (savedInstanceState != null) {
             mQuestionAnswered = savedInstanceState.getBooleanArray(KEY_QUESTION_ANSWERED);
+            mQuestionAnsweredCorrectly = savedInstanceState.getBooleanArray(KEY_QUESTION_ANSWERED_CORRECTLY);
             mCurrentIndex = savedInstanceState.getInt(KEY_INDEX, 0);
         } else {
             mQuestionAnswered = new boolean[mQuestionBank.length];
+            mQuestionAnsweredCorrectly = new boolean[mQuestionBank.length];
             mCurrentIndex = 0;
         }
 
@@ -143,6 +148,7 @@ public class QuizActivity extends AppCompatActivity {
         super.onSaveInstanceState(savedInstanceState);
         Log.i(TAG, "onSaveInstanceState");
         savedInstanceState.putBooleanArray(KEY_QUESTION_ANSWERED, mQuestionAnswered);
+        savedInstanceState.putBooleanArray(KEY_QUESTION_ANSWERED_CORRECTLY, mQuestionAnsweredCorrectly);
         savedInstanceState.putInt(KEY_INDEX, mCurrentIndex);
     }
 
@@ -200,13 +206,19 @@ public class QuizActivity extends AppCompatActivity {
         int messageResId = 0;
 
         if (userPressedTrue == answerIsTrue) {
+            mQuestionAnsweredCorrectly[mCurrentIndex] = true;
             messageResId = R.string.correct_toast;
         } else {
+            mQuestionAnsweredCorrectly[mCurrentIndex] = false;
             messageResId = R.string.incorrect_toast;
         }
 
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT)
                 .show();
+
+        if (isQuizCompleted()) {
+            gradeQuiz();
+        }
     }
 
     private void resetQuizState() {
@@ -221,5 +233,33 @@ public class QuizActivity extends AppCompatActivity {
         updateQuestion();
 
         Toast.makeText(this, R.string.exam_reset, Toast.LENGTH_SHORT).show();
+    }
+
+    private boolean isQuizCompleted() {
+        boolean quizCompleted = true;
+
+        for (boolean questionAnswered : mQuestionAnswered) {
+            if (!questionAnswered) {
+                quizCompleted = false;
+                break;
+            }
+        }
+
+        return quizCompleted;
+    }
+
+    private void gradeQuiz() {
+        int questionsAnsweredCorrectly = 0;
+        int totalQuestions = mQuestionBank.length;
+
+        for (boolean questionAnsweredCorrectly : mQuestionAnsweredCorrectly) {
+            if (questionAnsweredCorrectly) {
+                questionsAnsweredCorrectly++;
+            }
+        }
+
+        double score = (double) questionsAnsweredCorrectly / totalQuestions * 100;
+
+        Toast.makeText(this, "You were " + Math.round(score) + "% correct", Toast.LENGTH_SHORT).show();
     }
 }
