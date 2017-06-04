@@ -13,7 +13,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-// TODO README with forum links to each challenge and descriptions, perhaps refactor this code
 public class QuizActivity extends AppCompatActivity {
 
     private static final String TAG = QuizActivity.class.toString();
