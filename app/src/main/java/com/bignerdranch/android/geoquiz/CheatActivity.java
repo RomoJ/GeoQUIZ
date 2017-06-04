@@ -75,7 +75,7 @@ public class CheatActivity extends AppCompatActivity {
         });
 
         TextView apiLevelLabel = (TextView) findViewById(R.id.api_level_text_view);
-        apiLevelLabel.setText(BuildConfig.VERSION_NAME);
+        apiLevelLabel.setText("API Level " + Build.VERSION.SDK_INT);
 
         if (savedInstanceState != null) {
             mCheated = savedInstanceState.getBoolean(KEY_CHEATED);
